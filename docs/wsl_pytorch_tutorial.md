@@ -33,7 +33,7 @@ Ubuntu is the best distro for NVIDIA CUDA Toolkit support.
 wsl --install -d Ubuntu
 ```
 
-> This might require you to reboot your computer to finish installation.
+> This might require you to reboot your computer to finish installation. It might also say distro with same name is already installed, if so ignore this and move to the next step, your system already has ubuntu.
 
 ---
 
