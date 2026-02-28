@@ -85,9 +85,9 @@ Then follow the instructions in the CUDA WSL guide:
 
 ---
 
-## 5. Install PyTorch
+## 5. Install PyTorch (Optional)
 
-In Ubuntu, first create a virtual environment:
+In Ubuntu, first create a virtual environment however you see fit, below is the code I use for venvs, involving creating a venvs folder outside the project directory:
 
 ```bash
 python3 -m venv ~/venvs/torch
