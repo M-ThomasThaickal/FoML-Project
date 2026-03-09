@@ -2,4 +2,4 @@
 
 **/__pycache__
 
-**/hog_features.npz
+*.npz
