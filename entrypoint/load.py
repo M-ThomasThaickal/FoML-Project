@@ -13,3 +13,6 @@ train_ds = split1["train"]  # ~11,330
 val_ds   = split2["train"]  # ~2,428
 test_ds  = split2["test"]   # ~2,428
 
+print(f"train dataset length: {len(train_ds)}, expected is 11,330")
+print(f"validate dataset lenght: {len(val_ds)}, expected is 2,428")
+print(f"test dataset length: {len(test_ds)}, expected is 2,428")
