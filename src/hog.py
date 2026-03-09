@@ -1,5 +1,7 @@
 import numpy as np
+import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent / "entrypoint"))
 from skimage.feature import hog
 from skimage.color import rgb2gray
 from skimage.transform import resize

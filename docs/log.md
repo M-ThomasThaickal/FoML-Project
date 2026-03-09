@@ -52,9 +52,21 @@ Since our primary question is SVM vs. CNN rather than if we can beat the state o
 
 ### Split Size
 
-80/10/10 makes more sence here than 70/15/15. 10% of 16k is 1600 images, so that should be enough for tuning hyperparameters (validate) and testing.
+70/15/15 is used. 15% of 16k is ~2400 images, which is enough for tuning hyperparameters and testing.
 
 As for the random seed: "85 because that's the BPM of Valentine" - Channing.
+
+## HOG + SVM Results
+
+Grid search over C ∈ {0.1, 1.0, 10.0, 100.0} and gamma ∈ {1e-4, 1e-3, 1e-2, scale} using an RBF kernel SVM. Best params found: **C=10.0, gamma=scale**.
+
+Test set evaluation (run once after hyperparameters finalized):
+- Top-1 accuracy: **9.10%**
+- Top-5 accuracy: **21.71%**
+
+Low accuracy is expected given HOG's limitations on a 196-class fine-grained dataset — it captures shape/edge information but loses colour, texture, and fine detail that distinguishes car models. The CNN side of the project should significantly outperform this baseline.
+
+The best model is saved to `data/best_svm.pkl` and can be evaluated on new images using `src/predict.py`.
 
 ## Dependencies
 

@@ -45,6 +45,17 @@
 ### Preliminary results: describe the ML techniques you have attempted so far, and any results you may have obtained. You may provide 1-2 figures if helpful.
 
 - Tried: HOG 8,8 for pixels per cell - takes way too long to run on my device, so switched to 16,16
+- HOG + SVM (RBF kernel) pipeline completed:
+    - Grid search over C ∈ {0.1, 1.0, 10.0, 100.0} and gamma ∈ {1e-4, 1e-3, 1e-2, scale}, 16 combinations total, selected by best validation Top-1 accuracy
+    - Best params: C=10.0, gamma=scale
+    - Test set results: Top-1: 9.10%, Top-5: 21.71%
+    - Results are low but expected — HOG loses fine-grained detail (colour, texture, badges) that distinguishes car makes/models, and 196 classes is a hard problem for a linear feature + kernel classifier
+
+    
+    - Figures that would help illustrate results:
+        - Confusion matrix on test set — shows which classes are most confused with each other
+        - Top-1 accuracy per class (bar chart) — highlights which car classes HOG+SVM handles better or worse
+        - Val accuracy heatmap (C vs gamma) — visualizes the grid search landscape
 
 ### Teamwork: if you are working as part of a team, how have you been collaborating and
 

@@ -1,7 +1,11 @@
 import numpy as np
+import joblib
+from pathlib import Path
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 from hog import X_train, y_train, X_val, y_val, X_test, y_test
+
+MODEL_PATH = Path("../data/best_svm.pkl")
 
 
 def top5_accuracy(model, X, y):
@@ -43,6 +47,10 @@ for i, C in enumerate(C_values):
             best_model    = svm
 
 print(f"\nBest params: {best_params} — Val Top-1: {best_val_top1:.4f}")
+
+MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+joblib.dump(best_model, MODEL_PATH)
+print(f"Saved best model to {MODEL_PATH}")
 
 # # Test (run only after hyperparameters are finalized)
 # test_top1, test_top5 = evaluate(best_model, X_test, y_test, "Test")
