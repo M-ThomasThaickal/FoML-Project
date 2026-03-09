@@ -6,6 +6,7 @@
 ### Data exploration: what dataset are you using, and how have you tried to explore / visualize / familiarize yourself with it? What pre-processing steps have been performed, and what features were (or will be) extracted?
 
 - Dataset: Stanford Cars Dataset
+    - The Stanford Cars Dataset which contains 16,185 images of 196 classes of cars. Classes are typically at the level of Make, Model, Year, e.g. 2012 Tesla Model S or 2012 BMW M3 coupe. This dataset is found on HuggingFace. 
 - EDA:
     - Overview: verify number of total, training, testing, and validation samples. Verify the number of classes and check the amount of greyscale images in the raw dataset.
     - Check the width and height distribution for the images. 
@@ -51,14 +52,21 @@
     - Test set results: Top-1: 9.10%, Top-5: 21.71%
     - Results are low but expected — HOG loses fine-grained detail (colour, texture, badges) that distinguishes car makes/models, and 196 classes is a hard problem for a linear feature + kernel classifier
 
+    - Generated figures:
+        - side-by-side heatmap of Top-1 and Top-5 validation accuracy across the 4×4 (C, gamma) grid, with cell values annotated and the best configuration (C=10, gamma='scale') highlighted with a blue border. Also saves the figure to svm_grid_search.png.
     
-    - Figures that would help illustrate results:
+    - Figures that would help illustrate results (not created yet):
         - Confusion matrix on test set — shows which classes are most confused with each other
         - Top-1 accuracy per class (bar chart) — highlights which car classes HOG+SVM handles better or worse
         - Val accuracy heatmap (C vs gamma) — visualizes the grid search landscape
 
-### Teamwork: if you are working as part of a team, how have you been collaborating and
+### Teamwork: if you are working as part of a team, how have you been collaborating and dividing the work?
 
-dividing the work?
+- Most of the work done so far has been done in collaboration. This means one member might be writing code/files and pushing them to the repository, but both of us are together in person or on call working through the project. This included brainstorming project ideas, doing research on techniques we might use, and writing the project report. 
+- We worked together in determining the project workflow and the initialization of our hog.py and svm.py scripts (like choosing a starting configuration for HOG). Other subsections of the project have seen one member leading more than the other, but in these cases we frequently communicate our findings and the code being used. These sections include the exploratory data analysis on the dataset, led by Jesse, and the running of the SVM on the training + validation sets to determine the best hyperparameters, led by Manu.
 
 ### Next steps: based on your progress and any challenges you have encountered, what are the next steps you are considering?
+
+- Initially, we ran HOG with the 8x8 pixels per cell configuration. This took too long, so we switched to the 16x16 configuration. Future steps would include testing different HOG configurations like the pixels per cell or block size. 
+- Upon running SVM with RBF kernel on the chosen HOG configuration, we found many repeating values, like 0.0054 and 0.0964 for top-1 accuracy and 0.0227 and 0.2208 for top-5 accuracy. Even though we expect low accuracy for HOG + SVM even with perfect hyperparameters, this is an issue that we'll look a little more into. We might try finer C values (ex. 2, 5, 7 instead of just 1, 10). 
+- Lastly, once we finish testing with HOG + SVM, we plan on moving to using CNN, which is expected to produce much better results than HOG. 
