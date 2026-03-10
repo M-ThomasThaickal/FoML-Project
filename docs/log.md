@@ -56,7 +56,20 @@ Since our primary question is SVM vs. CNN rather than if we can beat the state o
 
 As for the random seed: "85 because that's the BPM of Valentine" - Channing.
 
-## HOG + SVM Results
+## HOG Configuration & Cache Strategy
+
+HOG features are cached to disk in `data/` to avoid recomputation. The cache filename is automatically derived from the `pixels_per_cell` setting in `HOG_PARAMS` (e.g. `hog_features_16x16.npz`, `hog_features_8x8.npz`), so different configurations coexist without overwriting each other.
+
+To switch between configurations, change `pixels_per_cell` in `HOG_PARAMS` inside `src/hog.py`:
+- `(16, 16)` — coarser features, smaller vector (~3780 dims), faster SVM training
+- `(8, 8)` — finer features, larger vector (~15120 dims), slower SVM training
+
+If the cache file for the selected config already exists it will be loaded; otherwise it will be extracted and saved automatically. Running `src/svm.py` after `src/hog.py` will always use whichever config is currently set.
+
+**Current config: 8x8** (switched from 16x16 to capture finer spatial detail).
+The original 16x16 cache is preserved as `data/hog_features_16x16.npz`.
+
+## HOG + SVM Results (16x16 pixels_per_cell)
 
 Grid search over C ∈ {0.1, 1.0, 10.0, 100.0} and gamma ∈ {1e-4, 1e-3, 1e-2, scale} using an RBF kernel SVM. Best params found: **C=10.0, gamma=scale**.
 

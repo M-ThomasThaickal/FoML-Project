@@ -15,7 +15,7 @@ from pathlib import Path
 from sklearn.metrics import confusion_matrix
 
 MODEL_PATH = Path("../data/best_svm.pkl")
-HOG_CACHE  = Path("../data/hog_features.npz")
+HOG_CACHE  = Path("../data/hog_features_8x8.npz")
 OUT_DIR    = Path("../data")
 
 if not MODEL_PATH.exists():
@@ -42,7 +42,7 @@ ax.set_xlabel("Predicted class", fontsize=11)
 ax.set_ylabel("True class", fontsize=11)
 ax.tick_params(axis="both", labelsize=5)
 plt.tight_layout()
-out = OUT_DIR / "confusion_matrix.png"
+out = OUT_DIR / "confusion8x8_matrix.png"
 fig.savefig(out, dpi=150)
 print(f"Saved {out}")
 plt.close(fig)
@@ -72,7 +72,7 @@ ax.axhline(per_class_acc.mean(), color="red", linestyle="--", linewidth=1,
            label=f"Mean: {per_class_acc.mean():.3f}")
 ax.legend()
 plt.tight_layout()
-out = OUT_DIR / "per_class_accuracy.png"
+out = OUT_DIR / "per_class_accuracy8x8.png"
 fig.savefig(out, dpi=150)
 print(f"Saved {out}")
 plt.close(fig)

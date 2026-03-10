@@ -11,11 +11,12 @@ from load import train_ds, val_ds, test_ds
 IMG_SIZE = (128, 128)
 HOG_PARAMS = dict(
     orientations=9,
-    pixels_per_cell=(16, 16),
+    pixels_per_cell=(8, 8),
     cells_per_block=(2, 2),
 )
 
-CACHE_PATH = Path("../data/hog_features.npz")
+_ppc = HOG_PARAMS["pixels_per_cell"][0]
+CACHE_PATH = Path(f"../data/hog_features_{_ppc}x{_ppc}.npz")
 
 
 def extract_hog(dataset):
