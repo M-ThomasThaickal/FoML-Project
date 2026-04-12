@@ -1,0 +1,5 @@
+{
+  "best_val_top1": 0.3542009884678748,
+  "best_checkpoint": "/mnt/c/Users/Manu/repositories/FoML-Project/data/best_cnn.pt",
+  "history": "/mnt/c/Users/Manu/repositories/FoML-Project/data/cnn_history.json"
+}
