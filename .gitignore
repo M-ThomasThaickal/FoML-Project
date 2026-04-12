@@ -4,3 +4,5 @@
 
 *.npz
 *.pkl
+*.pt
+*.pth
