@@ -6,3 +6,5 @@
 *.pkl
 *.pt
 *.pth
+data/*_history.json
+data/*_results.json
