@@ -1,6 +1,15 @@
 # CNN Workflow
 
-This guide explains how to run the CNN portion of the FoML project from a fresh checkout.
+This guide explains how to run the CNN side of the project and how to compare it against all current SVM baselines.
+
+The comparison now includes:
+
+- `HOG + SVM (RBF)`
+- `HOG + SVM (RBF, balanced class weights)`
+- `HOG + SVM (linear)`
+- `Raw pixels + SVM`
+- baseline CNN from `src/cnn.py`
+- upgraded CNN from `src/cnn_improved.py`
 
 ## 1. Start From the Repo Root
 
@@ -10,7 +19,7 @@ Open a terminal in the project folder:
 cd C:\Users\Manu\repositories\FoML-Project
 ```
 
-All commands below assume you are running them from the repo root.
+All commands below assume you are running from the repo root.
 
 ## 2. Create and Activate a Virtual Environment
 
@@ -22,17 +31,19 @@ python -m venv .venv
 python -m pip install --upgrade pip
 ```
 
-If PyTorch does not install for your Python version, create the environment with Python 3.10, 3.11, or 3.12 instead.
+If PyTorch does not install for your Python version, use Python 3.10, 3.11, or 3.12.
 
 ## 3. Install Dependencies
 
-Install PyTorch first. For an NVIDIA GPU build:
+Install PyTorch first.
+
+For an NVIDIA GPU build:
 
 ```powershell
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 ```
 
-If you do not have an NVIDIA GPU or do not want CUDA:
+For CPU-only:
 
 ```powershell
 pip install torch torchvision torchaudio
@@ -41,8 +52,10 @@ pip install torch torchvision torchaudio
 Then install the rest of the project dependencies:
 
 ```powershell
-pip install datasets scikit-learn scikit-image matplotlib jupyterlab numpy pillow joblib
+pip install datasets scikit-learn scikit-image matplotlib jupyterlab numpy pillow joblib tqdm
 ```
+
+`tqdm` enables the progress bars used by the longer-running feature extraction, SVM, and CNN scripts.
 
 ## 4. Verify PyTorch
 
@@ -52,54 +65,147 @@ Run:
 python -c "import torch; print(torch.__version__); print('cuda available:', torch.cuda.is_available())"
 ```
 
-If CUDA is working, `cuda available` should print `True`. CPU-only training can still run, but it will be much slower.
+If CUDA is working, `cuda available` should print `True`. CPU-only training still works, but it will be slower.
 
-## 5. Train the CNN
+## 5. Baseline CNN
 
-Start with a small baseline run:
+Run the baseline CNN:
 
 ```powershell
-python src/cnn.py --epochs 5 --batch-size 32
+python src/cnn.py --epochs 10 --batch-size 32
 ```
 
-The script uses the same Stanford Cars train/validation/test split as the SVM pipeline. It trains a pretrained ResNet-18 classifier head by default and saves:
+Saved artifacts:
 
-- `data/best_cnn.pt`: best checkpoint by validation Top-1 accuracy
-- `data/cnn_history.json`: epoch-by-epoch train/validation loss, Top-1 accuracy, and Top-5 accuracy
-- `data/cnn_results.json`: best validation result and output paths
+- `data/best_cnn.pt`
+- `data/cnn_history.json`
+- `data/cnn_results.json`
 
-The checkpoint file is ignored by Git because it can be large.
-
-## 6. Fine-Tune the CNN
-
-After the baseline works, try fine-tuning the whole model with a smaller learning rate:
+To fine-tune the whole baseline model:
 
 ```powershell
 python src/cnn.py --epochs 10 --batch-size 32 --fine-tune --lr 0.0001
 ```
 
-Use validation accuracy to decide whether the fine-tuned run is better than the frozen-backbone baseline.
+## 6. Upgraded CNN
 
-## 7. Evaluate on the Test Set
+Run the stronger CNN comparison model:
 
-Only run test evaluation once you are happy with validation performance:
+```powershell
+python src/cnn_improved.py --epochs 10 --batch-size 32
+```
+
+This model uses:
+
+- pretrained `ResNet34`
+- stronger augmentation
+- label smoothing
+- `AdamW`
+- cosine learning-rate decay
+- full fine-tuning by default
+
+Saved artifacts:
+
+- `data/best_cnn_improved.pt`
+- `data/cnn_improved_history.json`
+- `data/cnn_improved_results.json`
+
+## 7. Evaluate CNNs on the Test Set
+
+Evaluate the baseline CNN:
 
 ```powershell
 python src/cnn.py --eval-test-only
 ```
 
-This loads `data/best_cnn.pt`, evaluates on the held-out test split, and saves:
+This updates:
 
-- `data/cnn_results.json`: test loss, Top-1 accuracy, and Top-5 accuracy
-- `data/cnn_test_predictions.npz`: true labels, Top-1 predictions, and Top-5 predictions
+- `data/cnn_results.json`
+- `data/cnn_test_predictions.npz`
 
-You can also train and evaluate in one command:
+Evaluate the upgraded CNN:
 
 ```powershell
-python src/cnn.py --epochs 10 --batch-size 32 --fine-tune --lr 0.0001 --eval-test
+python src/cnn_improved.py --eval-test-only
 ```
 
-## 8. Open the Comparison Notebook
+This updates:
+
+- `data/cnn_improved_results.json`
+- `data/cnn_improved_test_predictions.npz`
+
+For a fairer final notebook comparison, run test evaluation for both CNNs so the notebook can show CNN test metrics instead of validation-best metrics.
+
+## 8. Run the SVM Baselines
+
+HOG + SVM (RBF):
+
+```powershell
+python src/svm.py
+```
+
+Saved artifacts:
+
+- `data/best_svm.pkl`
+- `data/svm_results.json`
+
+HOG + SVM (RBF, balanced class weights):
+
+```powershell
+python src/svm_balanced.py
+```
+
+Saved artifacts:
+
+- `data/best_svm_balanced.pkl`
+- `data/svm_balanced_results.json`
+
+HOG + SVM (linear):
+
+```powershell
+python src/svm_linear.py
+```
+
+Saved artifacts:
+
+- `data/best_svm_linear.pkl`
+- `data/svm_linear_results.json`
+
+Raw-pixel SVM:
+
+```powershell
+python src/svm_raw.py
+```
+
+Saved artifacts:
+
+- `data/best_svm_raw.pkl`
+- `data/svm_raw_results.json`
+
+Default behavior:
+
+- standardizes raw-pixel features
+- uses `64x64` grayscale raw-pixel features
+- applies PCA before the SVM
+- runs a smaller default search so the raw-pixel baseline is practical to finish
+
+If you want the heavier original-style search:
+
+```powershell
+python src/svm_raw.py --full-grid
+```
+
+If you want a quick subset experiment:
+
+```powershell
+python src/svm_raw.py --train-limit 4000 --val-limit 1000 --test-limit 1000
+```
+
+Note:
+
+- `src/svm_raw.py` uses scikit-learn `SVC`, so it is CPU-bound and will not make significant use of the GPU.
+
+## 9. Open the Comparison Notebook
 
 Start Jupyter:
 
@@ -113,29 +219,54 @@ Open:
 notebooks/cnn_comparison.ipynb
 ```
 
-Run the notebook cells from top to bottom. The notebook reads `data/cnn_history.json`, `data/cnn_results.json`, and `data/cnn_test_predictions.npz` if they exist. It produces:
+The notebook reads:
 
-- CNN training loss curves
-- CNN train/validation Top-1 and Top-5 accuracy curves
-- HOG + SVM vs CNN accuracy comparison
-- CNN per-class Top-1 accuracy plot after test evaluation
+- `data/svm_results.json`
+- `data/svm_balanced_results.json`
+- `data/svm_linear_results.json`
+- `data/svm_raw_results.json`
+- `data/cnn_history.json`
+- `data/cnn_results.json`
+- `data/cnn_improved_history.json`
+- `data/cnn_improved_results.json`
 
-## 9. Suggested Run Order
+If test predictions exist, it also reads:
+
+- `data/cnn_test_predictions.npz`
+- `data/cnn_improved_test_predictions.npz`
+
+The notebook produces:
+
+- baseline vs upgraded CNN training curves
+- full six-model accuracy comparison
+- HOG kernel / class-weight comparison
+- model hyperparameter summary
+- per-class Top-1 accuracy plots for available CNN test predictions
+
+## 10. Suggested Run Order
 
 For a first complete pass:
 
 ```powershell
-python src/cnn.py --epochs 5 --batch-size 32
+python src/svm.py
+python src/svm_balanced.py
+python src/svm_linear.py
+python src/svm_raw.py
+python src/cnn.py --epochs 10 --batch-size 32
+python src/cnn_improved.py --epochs 10 --batch-size 32
 jupyter lab
 ```
 
-Then inspect `notebooks/cnn_comparison.ipynb`.
-
-For a stronger final run:
+For a stronger final comparison:
 
 ```powershell
-python src/cnn.py --epochs 10 --batch-size 32 --fine-tune --lr 0.0001 --eval-test
+python src/svm.py
+python src/svm_balanced.py
+python src/svm_linear.py
+python src/svm_raw.py
+python src/cnn.py --eval-test-only
+python src/cnn_improved.py --eval-test-only
 jupyter lab
 ```
 
-Then rerun `notebooks/cnn_comparison.ipynb` to update the comparison figures.
+Then rerun `notebooks/cnn_comparison.ipynb` from top to bottom.

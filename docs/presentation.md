@@ -1,144 +1,320 @@
 ## Presentation Overview
 
-Each presentation should focus on your project itself rather than on a general explanation of machine learning algorithms.
+This draft is aligned with the current repo state, the presentation rubric, and the outputs being used by `notebooks/cnn_comparison.ipynb`.
+
+Important status note:
+
+- both CNNs now have saved **test** metrics
+- the six-model comparison can now be presented on a consistent test-set basis
 
 ---
 
 ## Overview
 
-**Please explain the problem you addressed:**
-Fine-grained vehicle type classification across 196 car classes. The core challenge is distinguishing visually similar vehicles — not just "car vs. truck" but make, model, and year-level distinctions.
+**Problem addressed**
 
-**The dataset you used:**
-Stanford Cars Dataset — 16,185 images across 196 classes of cars, with labeled train/test splits.
+Fine-grained vehicle classification across `196` classes in the Stanford Cars dataset. This is difficult because many classes differ by subtle visual cues such as trim, grille shape, headlights, badges, or model year details.
 
-**The preprocessing or feature choices that were important:**
-For SVM: HOG (Histogram of Oriented Gradients) feature extraction — captures edge orientations and shape information from images. For CNN: raw image input with standard resizing/normalization; features are learned automatically.
+**Dataset used**
 
-**The methods you applied:**
-1. SVM with HOG features (traditional ML baseline)
-2. SVM with raw features 
-3. CNN trained with backpropagation (deep learning approach)
+Stanford Cars Dataset:
 
-**Why those methods were appropriate for your specific dataset and task:**
-See Section 3 below.
+- `16,185` images
+- `196` car classes
+- combined original train/test split, then resplit into project-specific `70/15/15`
+- shared `train/val/test` split used across all methods
 
-**Describe how you evaluated your approach:**
-Top-1 and Top-5 accuracy on identical train/val/test splits (70/15/15). Manual error analysis of the top 20 misclassifications per method to understand failure modes.
+**Important preprocessing / feature choices**
 
-**What comparisons or alternative settings you considered:**
-SVM vs. CNN is the primary comparison — a traditional feature-engineering pipeline vs. a learned-representation approach, evaluated on the same splits and metrics.
+- `HOG + SVM`: grayscale conversion, resize to `128x128`, HOG extraction with `pixels_per_cell=(16,16)`
+- `Raw-pixel + SVM`: grayscale conversion, resize to `64x64`, flatten raw pixels, then standardize and reduce with PCA before SVM
+- `CNN baseline`: resized normalized RGB images with a pretrained `ResNet18`
+- `Improved CNN`: resized normalized RGB images with a pretrained `ResNet34`, stronger augmentation, label smoothing, and full fine-tuning
 
-**What you learned from the results:**
-[TODO: fill in after final results are ready]
+**Methods applied**
 
-**If you explored multiple methods, parameter choices, features, or preprocessing strategies, what was the reasoning behind those choices?**
-[TODO: fill in after final results are ready — include SVM kernel/C tuning, CNN architecture choices, hyperparameter decisions]
+1. `HOG + SVM (RBF kernel)`
+2. `HOG + SVM (RBF kernel, balanced class weights)`
+3. `HOG + SVM (linear kernel)`
+4. `Raw pixels + SVM`
+5. baseline CNN
+6. improved CNN
 
-**What the comparisons showed.**
-[TODO: fill in after final results are ready]
+**Why those methods were appropriate**
 
----
+The project compares classical feature-engineering pipelines against learned visual representations:
 
-## Section-by-section breakdown
+- HOG + SVM is a strong traditional baseline for image classification with fixed-length features
+- the balanced HOG + SVM variant tests whether compensating for class imbalance helps
+- raw-pixel + SVM tests whether hand-crafted HOG descriptors are actually helping
+- CNNs test whether learned hierarchical features outperform classical pipelines on a fine-grained vision problem
 
-### Section 1: Problem framing and motivation (10 pts)
-Clearly explains the problem being addressed, the dataset used, and why the task is meaningful or interesting.
+**How performance was evaluated**
 
-- **Problem:** Vehicle type classification of 196 car classes from images — a hard computer vision task where inter-class differences can be subtle (same make, different year)
-  - Q: How accurately can traditional ML methods classify these images?
-  - Q: What performance gains do deep learning approaches provide compared to traditional methods (SVM vs. CNN) for this case?
-- **Dataset:** Stanford Cars Dataset — 16,185 images, 196 classes, real-world variation in lighting, angle, and background
-- **Why:** Tests the limits of both traditional and deep learning approaches. Fine-grained categorization is a known hard problem, making it a meaningful testbed for comparing paradigms. 
+- Top-1 accuracy
+- Top-5 accuracy
+- identical `70/15/15` train/validation/test split for all methods
+- validation used for model selection
+- final comparison now uses test results for all six reported models
 
----
+**What comparisons or alternative settings were considered**
 
-### Section 2: Dataset-specific understanding and preprocessing (15 pts)
-Clearly explains the dataset, important preprocessing steps, feature choices, and any data-related challenges relevant to the project.
+- HOG + SVM with `RBF` vs `linear` kernels
+- HOG + SVM with and without balanced class weights
+- HOG features vs raw-pixel features for SVM
+- baseline CNN vs improved CNN
+- classical ML vs deep learning on the same dataset and split
 
-- **Dataset:** 16,185 images across 196 classes; imbalanced class sizes; real-world photography (varying pose, lighting, background)
-- **Preprocessing:**
-  - SVM pipeline: resize images to fixed dimensions → extract HOG features → train SVM on feature vectors
-  - CNN pipeline: resize + normalize pixel values → feed into network
-- **Feature choices:** HOG chosen because it captures edge orientation and shape — suited to car body silhouettes. CNN learns its own features hierarchically from raw pixels.
-- **Data-related challenges:** [TODO: fill in — e.g., class imbalance, image size variation, train/val split strategy]
+**What was learned**
 
----
-
-### Section 3: Method choice and justification (15 pts)
-Clearly explains the machine learning method(s) used and, more importantly, why those methods were appropriate for this specific dataset and task.
-
-- **SVM + HOG:**
-  - HOG captures edge orientations and shape — well-suited to distinguishing car body types (sedan vs. SUV vs. truck) where silhouette structure differs
-  - SVM is a strong classical classifier for fixed-length feature vectors like HOG descriptors
-  - Hypothesis: performs reasonably on coarse distinctions, but struggles with fine-grained differences (e.g., subtle badge/grill details between makes/models) because HOG discards color and fine texture
-
-- **CNN:**
-  - Learns hierarchical features automatically via backpropagation — no need for hand-crafted descriptors
-  - Captures both low-level texture/edges and high-level semantic features, which is critical for 196-class fine-grained categorization
-  - Expected to outperform SVM precisely because fine-grained distinctions require richer representations than HOG can provide
-
-- **Why this pairing:** SVM+HOG and CNN represent two distinct paradigms — manual feature engineering vs. learned representations. Comparing them directly answers the project's core research question and makes the performance gap interpretable.
+- CNNs dramatically outperform the SVM baselines on this dataset
+- among the classical methods, `HOG + SVM (RBF)` and `HOG + SVM (RBF, balanced)` are almost identical
+- `linear` HOG SVM is weaker than `RBF`
+- raw-pixel SVM performs worst, suggesting that raw flattened pixels are a poor classical representation for this task
+- the improved CNN is the strongest model overall on the current test comparison
 
 ---
 
-### Section 4: Evaluation design and comparisons (15 pts)
-Clearly explains how performance was evaluated, including metrics, train/test setup or validation strategy, and any comparisons to baselines, alternative methods, or alternative settings.
+## Section-by-section Breakdown
 
-- **Metrics:** Top-1 accuracy (exact match) and Top-5 accuracy (correct class in top 5 predictions)
-- **Splits:** Identical 70/15/15 train/val/test splits used for both methods to ensure fair comparison
-- **Error analysis:** Manual inspection of top 20 misclassifications per method — used to understand failure modes qualitatively, not just quantitatively
-- **Comparisons:** SVM+HOG vs. CNN on the same task, same splits, same metrics
-- **Alternative settings considered:** [TODO: SVM kernel choices, C/gamma tuning; CNN architecture variants, learning rate, regularization]
+### Section 1: Problem Framing and Motivation
 
----
-
-### Section 5: Results and interpretation (20 pts)
-Presents results clearly and correctly. Interprets what the results mean, explains what worked and what did not, and draws reasonable conclusions.
-
-- **Results table:**
-
-| Method | Top-1 Accuracy | Top-5 Accuracy |
-|--------|---------------|----------------|
-| SVM + HOG | [TODO] | [TODO] |
-| CNN | [TODO] | [TODO] |
-
-- **What worked:** [TODO]
-- **What did not work:** [TODO]
-- **Error analysis findings:** [TODO — e.g., did SVM confuse same-model different-years? Did CNN fail on unusual angles?]
-- **Conclusions:** [TODO]
+- **Problem:** classify car images at the make/model/year level across `196` classes
+- **Why it is hard:** classes are visually similar and often differ only in subtle local details
+- **Why it matters:** this is a good test of whether classical hand-crafted features can compete with learned deep features on a fine-grained vision task
+- **Project question:** how much performance do we gain by moving from classical SVM pipelines to CNNs, and which feature/kernel choices matter most?
 
 ---
 
-### Section 6: Depth of understanding (15 pts)
-Demonstrates real ownership of the project — design choices, implementation decisions, limitations, and tradeoffs. Explains how methods behaved on *this dataset* specifically.
+### Section 2: Dataset-Specific Understanding and Preprocessing
 
-- **Key insight — HOG limitation:** HOG discards color and fine texture, so it likely struggles with distinguishing cars that share body shape but differ in badge/trim details — exactly the kind of distinction needed for 196-class fine-grained classification
-- **Key insight — CNN advantage:** CNN's ability to learn task-specific features means it can pick up on subtle visual cues HOG cannot encode
-- **Tradeoffs:** SVM+HOG is faster to train and more interpretable; CNN is more powerful but requires more data, compute, and tuning
-- **Limitations:** [TODO — e.g., dataset size relative to 196 classes, no pretrained weights / transfer learning used, etc.]
-- **Next steps:** [TODO — e.g., transfer learning with a pretrained backbone, data augmentation, ensemble approaches]
+- **Dataset:** Stanford Cars, `16,185` images, `196` classes
+- **Split setup:** original train/test merged and re-split into `70/15/15` with fixed seeds for consistency across models
+- **Challenges in this dataset:**
+  - many classes are visually close to each other
+  - classifying year-level variants requires fine detail
+  - real-world images include variation in lighting, angle, background, and scale
+  - some classes have more examples than others, motivating the balanced-class SVM experiment
+
+**Preprocessing by method**
+
+- **HOG pipeline**
+  - resize to `128x128`
+  - convert to grayscale
+  - extract HOG descriptors
+  - use `pixels_per_cell=(16,16)` because `8x8` was too computationally heavy on available hardware
+
+- **Raw-pixel SVM pipeline**
+  - resize to `64x64`
+  - convert to grayscale
+  - flatten to raw pixel vectors
+  - standardize and apply PCA before classification
+
+- **CNN pipelines**
+  - convert to RGB
+  - resize / crop images for network input
+  - normalize with ImageNet mean/std
+  - improved CNN also adds stronger augmentation
 
 ---
 
-### Section 7: Presentation clarity and organization (5 pts)
-Clear, well-organized slides that fit within the time limit.
+### Section 3: Method Choice and Justification
 
-- [ ] Slide 1: Title + team members
-- [ ] Slide 2: Problem and motivation
-- [ ] Slide 3: Dataset overview
-- [ ] Slide 4: Methods — SVM+HOG pipeline
-- [ ] Slide 5: Methods — CNN architecture
-- [ ] Slide 6: Why these methods (justification)
-- [ ] Slide 7: Evaluation setup
-- [ ] Slide 8: Results (table/chart)
-- [ ] Slide 9: Error analysis / qualitative findings
-- [ ] Slide 10: Conclusions + limitations + next steps
+**HOG + SVM**
+
+- HOG captures local edge orientation and coarse shape information
+- this is a reasonable baseline for cars because silhouette and body structure matter
+- `RBF` kernel was tested because class boundaries are likely nonlinear
+- `linear` kernel was tested to compare a simpler classical margin-based baseline
+- `class_weight="balanced"` was tested to check whether giving rarer classes more weight improves performance on the imbalanced class distribution
+
+**Raw-pixel + SVM**
+
+- included as an ablation against HOG
+- tests whether the hand-crafted HOG representation is actually adding value over raw flattened pixels
+- PCA was required to make this pipeline computationally practical
+
+**Baseline CNN**
+
+- pretrained `ResNet18`
+- simple transfer-learning baseline
+- appropriate because the dataset is visual and benefits from learned image features
+
+**Improved CNN**
+
+- pretrained `ResNet34`
+- stronger augmentation
+- dropout, label smoothing, AdamW, cosine LR scheduling
+- full fine-tuning by default
+- chosen to test whether a stronger transfer-learning recipe substantially improves fine-grained classification
+
+**Why this method mix is good for the project**
+
+- compares hand-crafted features vs learned features
+- compares kernel choice and class weighting within the HOG + SVM family
+- compares hand-crafted HOG descriptors against raw flattened pixels
+- compares simpler vs stronger CNN training recipes
+- makes the final conclusions more defensible than using only one baseline and one deep model
 
 ---
 
-### Section 8: Team participation and individual contribution (5 pts)
-All team members participate and can explain their part of the project.
+### Section 4: Evaluation Design and Comparisons
 
-- [TODO: assign slide ownership per team member]
-- Each person should be prepared to answer Q&A about their section's design choices and implementation decisions
+- **Metrics:** Top-1 and Top-5 accuracy
+- **Shared split:** same `train/val/test` partition across all models
+- **Model selection:** validation performance used to choose best hyperparameters/checkpoints
+- **Final reporting:** test-set results for all six models
+- **Notebook comparison includes:**
+  - `HOG + SVM (RBF)`
+  - `HOG + SVM (RBF, balanced)`
+  - `HOG + SVM (linear)`
+  - `Raw pixels + SVM`
+  - baseline CNN
+  - improved CNN
+
+**Hyperparameter choices currently used**
+
+- **HOG + SVM (RBF):**
+  - best `C = 10.0`
+  - best `gamma = scale`
+
+- **HOG + SVM (RBF, balanced):**
+  - best `C = 10.0`
+  - best `gamma = scale`
+  - `class_weight = balanced`
+
+- **HOG + SVM (linear):**
+  - best `C = 0.1`
+
+- **Raw pixels + SVM:**
+  - `64x64` grayscale raw pixels
+  - PCA to `256` components
+  - search over `C in [1.0, 10.0]`
+  - search over `gamma in [scale, 0.001]`
+  - best `C = 10.0`, `gamma = scale`
+
+- **Baseline CNN:**
+  - pretrained `ResNet18`
+  - trained for `10` epochs
+  - test checkpoint came from epoch `6`
+
+- **Improved CNN:**
+  - pretrained `ResNet34`
+  - stronger augmentation
+  - label smoothing
+  - AdamW
+  - cosine LR scheduler
+  - full fine-tuning
+  - test checkpoint came from epoch `9`
+
+---
+
+### Section 5: Results and Interpretation
+
+Current results from the saved comparison artifacts:
+
+| Method | Split Shown | Top-1 | Top-5 |
+|--------|-------------|-------|-------|
+| HOG + SVM (RBF) | Test | 0.0910 | 0.2171 |
+| HOG + SVM (RBF, balanced) | Test | 0.0914 | 0.2162 |
+| HOG + SVM (linear) | Test | 0.0680 | 0.1808 |
+| Raw pixels + SVM | Test | 0.0313 | 0.0840 |
+| Baseline CNN | Test | 0.8262 | 0.9650 |
+| Improved CNN | Test | 0.8929 | 0.9835 |
+
+**Interpretation**
+
+- The strongest current classical baseline is `HOG + SVM (RBF)`.
+- Adding balanced class weights to the `RBF` HOG SVM changes the result only slightly:
+  - Top-1 improves from `0.0910` to `0.0914`
+  - Top-5 changes slightly downward from `0.2171` to `0.2162`
+- That suggests class imbalance was not the main bottleneck in this project; representation quality is the bigger issue.
+- Switching from `RBF` to `linear` on the same HOG features reduces performance, which suggests the class boundaries are not well modeled by a simple linear separator.
+- Raw-pixel SVM performs much worse than HOG + SVM, which supports the idea that HOG is adding useful structure for a classical model.
+- The baseline CNN improves dramatically over all SVM baselines, showing that learned visual features are much better suited to this fine-grained task.
+- The improved CNN is the strongest model overall, increasing test Top-1 from `0.8262` to `0.8929` and test Top-5 from `0.9650` to `0.9835`.
+
+**High-level conclusion**
+
+- Fine-grained car classification is much better handled by transfer-learned CNNs than by classical SVM pipelines on hand-crafted or raw features.
+- Within the SVM family, `RBF + HOG` is clearly the best option among the tested classical methods.
+- Within the CNN family, the stronger training recipe and larger backbone provide a meaningful additional gain over the baseline CNN.
+
+---
+
+### Section 6: Depth of Understanding
+
+**What worked**
+
+- pretrained CNNs worked far better than the classical SVM baselines
+- HOG was a much better classical feature representation than raw flattened pixels
+- `RBF` kernel performed better than `linear` on HOG features
+- balancing class weights did not materially improve the HOG + RBF SVM, which is itself an informative result
+
+**What did not work well**
+
+- raw-pixel SVM was weak and computationally expensive
+- HOG with a finer `8x8` setting was too slow for the available hardware
+- classical features struggled with the fine-grained nature of the dataset
+
+**Why the methods behaved this way on this dataset**
+
+- HOG captures edges and shape, but it loses color, texture, and many small details
+- raw pixels preserve more information than HOG, but in a form that is hard for an SVM to use effectively
+- CNNs learn task-specific features that can capture local texture, shape, and higher-level visual cues simultaneously
+- the minimal gain from balanced class weights suggests the hardest issue is not mild class imbalance, but the visual complexity of the 196-way fine-grained recognition task
+
+**Tradeoffs**
+
+- SVM pipelines are conceptually simpler and easier to interpret
+- CNNs require more compute and tuning, but the performance gain is much larger
+- stronger CNN training recipes improve accuracy but also increase implementation complexity
+
+**Limitations**
+
+- no final qualitative misclassification analysis has been written into the presentation draft yet
+- the study compares a limited set of feature and model families rather than an exhaustive benchmark
+- no ensemble methods or larger modern architectures beyond the current improved CNN were tested
+
+**Next steps**
+
+- add one slide with representative failure cases or confusion examples
+- if time permits, discuss why class weighting did not substantially help the HOG + SVM baseline
+- mention possible future work such as larger pretrained backbones or ensembles
+
+---
+
+### Section 7: Presentation Clarity and Organization
+
+Suggested slide order:
+
+- Slide 1: title, team members, problem statement
+- Slide 2: why fine-grained car classification is hard
+- Slide 3: dataset and split setup
+- Slide 4: SVM pipelines and variants
+- Slide 5: CNN baseline and improved CNN
+- Slide 6: evaluation setup and metrics
+- Slide 7: full six-model comparison chart from `cnn_comparison.ipynb`
+- Slide 8: HOG SVM kernel / class-weight comparison
+- Slide 9: interpretation of CNN vs SVM gap and main takeaways
+- Slide 10: conclusion, limitations, and next steps
+
+Keep the focus on project decisions, comparisons, and findings rather than textbook algorithm definitions.
+
+---
+
+### Section 8: Team Participation and Individual Contribution
+
+Suggested split:
+
+- one person covers dataset, preprocessing, and SVM design choices
+- one person covers CNN design choices, training setup, and model comparison
+- both should be able to explain the evaluation setup and the main results
+
+Prepare for Q&A on:
+
+- why `16x16` HOG was used instead of `8x8`
+- why raw-pixel SVM needed PCA and `64x64` resizing
+- why `RBF` beat `linear` for HOG
+- why balanced class weights only changed performance slightly
+- why CNNs outperform the SVM pipelines so strongly on this dataset
