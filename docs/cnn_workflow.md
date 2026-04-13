@@ -1,11 +1,13 @@
 # CNN Workflow
 
-This guide explains how to run the CNN side of the project and how to compare it against both SVM pipelines.
+This guide explains how to run the CNN side of the project and how to compare it against all current SVM baselines.
 
 The comparison now includes:
 
-- `SVM + HOG`
-- `SVM + raw pixels`
+- `HOG + SVM (RBF)`
+- `HOG + SVM (RBF, balanced class weights)`
+- `HOG + SVM (linear)`
+- `Raw pixels + SVM`
 - baseline CNN from `src/cnn.py`
 - upgraded CNN from `src/cnn_improved.py`
 
@@ -67,13 +69,11 @@ If CUDA is working, `cuda available` should print `True`. CPU-only training stil
 
 ## 5. Baseline CNN
 
-Run a baseline training job:
+Run the baseline CNN:
 
 ```powershell
-python src/cnn.py --epochs 5 --batch-size 32
+python src/cnn.py --epochs 10 --batch-size 32
 ```
-
-This trains a pretrained `ResNet18` classifier head by default on the same train/validation/test split used by the SVM pipelines.
 
 Saved artifacts:
 
@@ -81,7 +81,7 @@ Saved artifacts:
 - `data/cnn_history.json`
 - `data/cnn_results.json`
 
-To fine-tune the whole baseline model instead of only the classifier head:
+To fine-tune the whole baseline model:
 
 ```powershell
 python src/cnn.py --epochs 10 --batch-size 32 --fine-tune --lr 0.0001
@@ -134,23 +134,11 @@ This updates:
 - `data/cnn_improved_results.json`
 - `data/cnn_improved_test_predictions.npz`
 
-You can also train and evaluate in one command.
-
-Baseline:
-
-```powershell
-python src/cnn.py --epochs 10 --batch-size 32 --fine-tune --lr 0.0001 --eval-test
-```
-
-Upgraded:
-
-```powershell
-python src/cnn_improved.py --epochs 10 --batch-size 32 --eval-test
-```
+For a fairer final notebook comparison, run test evaluation for both CNNs so the notebook can show CNN test metrics instead of validation-best metrics.
 
 ## 8. Run the SVM Baselines
 
-HOG-based SVM:
+HOG + SVM (RBF):
 
 ```powershell
 python src/svm.py
@@ -160,6 +148,28 @@ Saved artifacts:
 
 - `data/best_svm.pkl`
 - `data/svm_results.json`
+
+HOG + SVM (RBF, balanced class weights):
+
+```powershell
+python src/svm_balanced.py
+```
+
+Saved artifacts:
+
+- `data/best_svm_balanced.pkl`
+- `data/svm_balanced_results.json`
+
+HOG + SVM (linear):
+
+```powershell
+python src/svm_linear.py
+```
+
+Saved artifacts:
+
+- `data/best_svm_linear.pkl`
+- `data/svm_linear_results.json`
 
 Raw-pixel SVM:
 
@@ -212,6 +222,8 @@ notebooks/cnn_comparison.ipynb
 The notebook reads:
 
 - `data/svm_results.json`
+- `data/svm_balanced_results.json`
+- `data/svm_linear_results.json`
 - `data/svm_raw_results.json`
 - `data/cnn_history.json`
 - `data/cnn_results.json`
@@ -226,7 +238,9 @@ If test predictions exist, it also reads:
 The notebook produces:
 
 - baseline vs upgraded CNN training curves
-- `SVM + HOG` vs `SVM + raw pixels` vs baseline CNN vs upgraded CNN accuracy comparison
+- full six-model accuracy comparison
+- HOG kernel / class-weight comparison
+- model hyperparameter summary
 - per-class Top-1 accuracy plots for available CNN test predictions
 
 ## 10. Suggested Run Order
@@ -235,8 +249,10 @@ For a first complete pass:
 
 ```powershell
 python src/svm.py
+python src/svm_balanced.py
+python src/svm_linear.py
 python src/svm_raw.py
-python src/cnn.py --epochs 5 --batch-size 32
+python src/cnn.py --epochs 10 --batch-size 32
 python src/cnn_improved.py --epochs 10 --batch-size 32
 jupyter lab
 ```
@@ -245,9 +261,11 @@ For a stronger final comparison:
 
 ```powershell
 python src/svm.py
+python src/svm_balanced.py
+python src/svm_linear.py
 python src/svm_raw.py
-python src/cnn.py --epochs 10 --batch-size 32 --fine-tune --lr 0.0001 --eval-test
-python src/cnn_improved.py --epochs 10 --batch-size 32 --eval-test
+python src/cnn.py --eval-test-only
+python src/cnn_improved.py --eval-test-only
 jupyter lab
 ```
 

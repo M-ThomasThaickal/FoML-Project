@@ -1,11 +1,13 @@
 # Project Workflow
 
-This document is a cleaner runbook for the main project pipeline.
+This document is a runbook for the current project pipeline.
 
-The project compares four approaches on the same Stanford Cars split:
+The project now compares six approaches on the same Stanford Cars split:
 
-- `SVM + HOG`
-- `SVM + raw pixels`
+- `HOG + SVM (RBF)`
+- `HOG + SVM (RBF, balanced class weights)`
+- `HOG + SVM (linear)`
+- `Raw pixels + SVM`
 - baseline CNN
 - upgraded CNN
 
@@ -50,9 +52,9 @@ Behavior:
 
 Outputs:
 
-- `data/hog_features_8x8.npz` or `data/hog_features_16x16.npz`, depending on `HOG_PARAMS`
+- `data/hog_features_16x16.npz` with the current `HOG_PARAMS`
 
-### 3. SVM on HOG Features
+### 3. HOG + SVM (RBF)
 
 Script: `src/svm.py`
 
@@ -71,7 +73,45 @@ Outputs:
 - `data/best_svm.pkl`
 - `data/svm_results.json`
 
-### 4. Raw Pixel Feature Extraction
+### 4. HOG + SVM (RBF, Balanced)
+
+Script: `src/svm_balanced.py`
+
+Inputs:
+
+- HOG features from `src/hog.py`
+
+Behavior:
+
+- runs the same RBF-kernel HOG SVM search
+- sets `class_weight="balanced"`
+- evaluates on the same validation and test splits
+
+Outputs:
+
+- `data/best_svm_balanced.pkl`
+- `data/svm_balanced_results.json`
+
+### 5. HOG + SVM (Linear)
+
+Script: `src/svm_linear.py`
+
+Inputs:
+
+- HOG features from `src/hog.py`
+
+Behavior:
+
+- trains a linear-kernel SVM
+- searches over `C`
+- evaluates the best model on validation and test
+
+Outputs:
+
+- `data/best_svm_linear.pkl`
+- `data/svm_linear_results.json`
+
+### 6. Raw Pixel Feature Extraction
 
 Script: `src/raw_pixels.py`
 
@@ -92,7 +132,7 @@ Outputs:
 
 - `data/raw_pixel_features_64x64.npz`
 
-### 5. SVM on Raw Pixels
+### 7. Raw Pixels + SVM
 
 Script: `src/svm_raw.py`
 
@@ -104,9 +144,8 @@ Behavior:
 
 - standardizes the raw-pixel features
 - reduces dimensionality with PCA before the SVM
-- runs the same RBF-kernel SVM grid search as the HOG pipeline
+- runs an RBF SVM search on the reduced features
 - uses a smaller default search space so the comparison is practical to run
-- selects the best model using validation Top-1 accuracy
 - evaluates the best model on the test set
 
 Outputs:
@@ -121,12 +160,6 @@ Default faster run:
 ```powershell
 python src/svm_raw.py
 ```
-
-This uses:
-
-- `pca_components=256`
-- `C in [1.0, 10.0]`
-- `gamma in ["scale", 1e-3]`
 
 Full heavier run:
 
@@ -144,9 +177,9 @@ Performance note:
 
 - `src/svm_raw.py` uses scikit-learn `SVC`, so it is CPU-bound and will not significantly use the GPU.
 - PCA is included because an RBF SVM on raw pixel vectors is otherwise too slow for a practical comparison run.
-- The raw-pixel pipeline now uses `64x64` grayscale images, which reduces each feature vector to `4096` values and makes the comparison more realistic on this hardware.
+- The raw-pixel pipeline uses `64x64` grayscale images, which reduces each feature vector to `4096` values.
 
-### 6. Baseline CNN
+### 8. Baseline CNN
 
 Script: `src/cnn.py`
 
@@ -164,7 +197,7 @@ Outputs:
 - `data/cnn_results.json`
 - `data/cnn_test_predictions.npz` when test evaluation is run
 
-### 7. Upgraded CNN
+### 9. Upgraded CNN
 
 Script: `src/cnn_improved.py`
 
@@ -184,20 +217,24 @@ Outputs:
 - `data/cnn_improved_results.json`
 - `data/cnn_improved_test_predictions.npz` when test evaluation is run
 
-### 8. Comparison Notebook
+### 10. Comparison Notebook
 
 Notebook: `notebooks/cnn_comparison.ipynb`
 
 Compares:
 
-- `SVM + HOG`
-- `SVM + raw pixels`
+- `HOG + SVM (RBF)`
+- `HOG + SVM (RBF, balanced)`
+- `HOG + SVM (linear)`
+- `Raw pixels + SVM`
 - baseline CNN
 - upgraded CNN
 
 Reads:
 
 - `data/svm_results.json`
+- `data/svm_balanced_results.json`
+- `data/svm_linear_results.json`
 - `data/svm_raw_results.json`
 - `data/cnn_history.json`
 - `data/cnn_results.json`
@@ -212,7 +249,9 @@ Optional diagnostic inputs:
 Produces:
 
 - CNN training curves
-- final accuracy comparison bar chart
+- full six-model accuracy comparison bar chart
+- HOG kernel / class-weight comparison chart
+- model hyperparameter summary
 - per-class CNN accuracy plots when prediction files exist
 
 ## Recommended Run Order
@@ -221,19 +260,23 @@ Produces:
 
 ```powershell
 python src/svm.py
+python src/svm_balanced.py
+python src/svm_linear.py
 python src/svm_raw.py
-python src/cnn.py --epochs 5 --batch-size 32
+python src/cnn.py --epochs 10 --batch-size 32
 python src/cnn_improved.py --epochs 10 --batch-size 32
 jupyter lab
 ```
 
-### Final comparison run
+### Fairer final comparison run
 
 ```powershell
 python src/svm.py
+python src/svm_balanced.py
+python src/svm_linear.py
 python src/svm_raw.py
-python src/cnn.py --epochs 10 --batch-size 32 --fine-tune --lr 0.0001 --eval-test
-python src/cnn_improved.py --epochs 10 --batch-size 32 --eval-test
+python src/cnn.py --eval-test-only
+python src/cnn_improved.py --eval-test-only
 jupyter lab
 ```
 
@@ -244,5 +287,5 @@ After that, open `notebooks/cnn_comparison.ipynb` and run all cells.
 - All pipelines use the same train, validation, and test split from `entrypoint/load.py`.
 - HOG and raw-pixel features are cached so they do not need to be recomputed every run.
 - CNN checkpoints are selected by validation Top-1 accuracy.
-- The comparison notebook can still display partial results if some artifacts are missing, but the full comparison needs all four pipelines to be run.
+- The notebook currently uses test metrics when they exist and falls back to validation metrics otherwise.
 - Install `tqdm` in the environment if you want the full progress bars shown by the long-running scripts.

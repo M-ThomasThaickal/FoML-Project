@@ -1,5 +1,9 @@
 {
-  "best_val_top1": 0.3542009884678748,
-  "best_checkpoint": "/mnt/c/Users/Manu/repositories/FoML-Project/data/best_cnn.pt",
-  "history": "/mnt/c/Users/Manu/repositories/FoML-Project/data/cnn_history.json"
+  "test": {
+    "checkpoint_epoch": 6,
+    "loss": 0.6877296341113636,
+    "top1": 0.8261943986820428,
+    "top5": 0.96499176276771,
+    "predictions": "C:\\Users\\Manu\\repositories\\FoML-Project\\data\\cnn_test_predictions.npz"
+  }
 }
