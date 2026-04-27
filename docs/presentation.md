@@ -175,8 +175,8 @@ The project compares classical feature-engineering pipelines against learned vis
 **Hyperparameter choices currently used**
 
 - **HOG + SVM (RBF):**
-  - best `C = 10.0`
-  - best `gamma = scale`
+  - best `C = 10.0` (0.1, 1, 10, 100)
+  - best `gamma = scale` (0.01, 0.001, 0.0001, scale)
 
 - **HOG + SVM (RBF, balanced):**
   - best `C = 10.0`
