@@ -30,6 +30,9 @@ The main comparison in the project is between classical SVM pipelines and transf
 - `data/`  
   Cached features, saved models, checkpoints, and metric outputs.
 
+- `pdfs/`
+  Raw PDFs for class submissions, including the project proposal and reports.
+
 ## Where to start
 
 If you want the full project run order, start with:
