@@ -1,6 +1,6 @@
 # FoML Project
 
-This repository contains our Stanford Cars classification project for Foundations of Machine Learning.
+This repository contains our Stanford Cars classification project for Foundations of Machine Learning (CS 4262), taught in Spring 2026 by Dr. Ashwin Tudur Sadashiva.
 
 Link to Presentation Slides: https://docs.google.com/presentation/d/1NSTjKjHbLSs4XhLwYnHQLGozTOz36pf9hPSKtF0lvAU/edit?usp=sharing 
 
