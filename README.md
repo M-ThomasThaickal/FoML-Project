@@ -2,7 +2,7 @@
 
 This repository contains our Stanford Cars classification project for Foundations of Machine Learning.
 
-Link to Slide Presentation: https://docs.google.com/presentation/d/1NSTjKjHbLSs4XhLwYnHQLGozTOz36pf9hPSKtF0lvAU/edit?usp=sharing 
+Link to Presentation Slides: https://docs.google.com/presentation/d/1NSTjKjHbLSs4XhLwYnHQLGozTOz36pf9hPSKtF0lvAU/edit?usp=sharing 
 
 The main comparison in the project is between classical SVM pipelines and transfer-learned CNNs:
 
